@@ -2,10 +2,46 @@ from flask import Flask,url_for, render_template, session, redirect, request
 from flask_socketio import join_room, leave_room, send, SocketIO
 import random
 from string import ascii_uppercase
+from flask_sqlalchemy import SQLAlchemy
+
 
 app = Flask(__name__) # initialize application
 app.config['SECRET_KEY'] = 'SKRTK3'  # ???figure this out
 socketio = SocketIO(app)  # initialize the web socket using flask-socketIO
+
+app.config['SQLALCHEMY_DATABASE_URI']='sqlite:///users.db' #db
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app) # initialize db-
+
+# User model-
+class User(db.Model):
+    user_id = db.Column(db.Integer, primary_key=True, autoincrement=True) #don't have to add value for user_id because it will automatically increase
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    full_name = db.Column(db.String(120), nullable=False)
+    phone_number = db.Column(db.String(20), nullable=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    department = db.Column(db.String(100), nullable=True)
+    role = db.Column(db.String(100), nullable=True)
+    clearance_level = db.Column(db.Integer, nullable=True)
+    public_key = db.Column(db.String(512), nullable=True)
+
+    def __repr__(self):
+        return f'<User {self.username}>'
+
+class Message(db.Model):
+    message_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    track_message_id = db.Column(db.Integer, db.ForeignKey('message.message_id'), nullable=False) #order messages came in
+    message_content = db.Column(db.Text, nullable=False)
+
+
+    def __repr__(self):
+        return f'<Message {self.message_id}>'
+
+
 
 rooms = {} # the number of rooms currently existing, begins empty
 
@@ -26,7 +62,6 @@ def generate_unique_code(length):
 def homepage():
     return render_template("home.html")
 
-
 # this is the chat home page.
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():  # put application's code here
@@ -40,6 +75,7 @@ def chat():  # put application's code here
             return render_template("chatHome.html", error="Please enter a name.", code=code, name=name)
         if join != False and not code:
             return render_template("chatHome.html", error="Please enter a code.", code=code, name=name)
+
         room = code
         if create is not False:
             room = generate_unique_code(4)
@@ -134,4 +170,6 @@ def disconnect():
     print(f"{name} left the room {room}")
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    with app.app_context():
+        db.create_all()
+    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
