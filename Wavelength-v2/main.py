@@ -1,13 +1,22 @@
 from flask import Flask,url_for, render_template, session, redirect, request
 from flask_socketio import join_room, leave_room, send, SocketIO
 import random
-from string import ascii_uppercase
+from string import ascii_uppercase, ascii_lowercase
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
+def generate_secret_key(length):
+    while True:
+        code = ""
+        for _ in range(length):
+            code += random.choice(ascii_uppercase)
+            code += random.choice(ascii_lowercase)
+        return code
+
+
 
 app = Flask(__name__) # initialize application
-app.config['SECRET_KEY'] = 'SKRTK3'  # ???figure this out
+app.config['SECRET_KEY'] =  generate_secret_key(10)
 socketio = SocketIO(app)  # initialize the web socket using flask-socketIO
 
 app.config['SQLALCHEMY_DATABASE_URI']='sqlite:///users.db' #db
