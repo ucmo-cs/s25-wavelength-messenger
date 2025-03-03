@@ -3,6 +3,7 @@ from flask_socketio import join_room, leave_room, send, SocketIO
 import random
 from string import ascii_uppercase
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 app = Flask(__name__) # initialize application
@@ -111,15 +112,66 @@ def message(data):
     rooms[room]["messages"].append(content)
     print(f"{session.get('name')} said {data['data']}")
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
 
+        # Find the user by username
+        user = User.query.filter_by(username=username).first()
+
+        if user and check_password_hash(user.password_hash, password):
+            # if login successful redirect to home page
+            return redirect(url_for('homepage'))
+
+        else:
+            # Invalid user or pass
+            return render_template("login.html", error="Invalid username or password")
 
     return render_template("login.html")
 
-@app.route('/register')
+@app.route('/register', methods=['GET', 'POST'])
 def register():
+    if request.method == 'POST':
+        # Getting data from db
+        username = request.form['username']
+        full_name = request.form['full_name']
+        phone_number = request.form['phone_number']
+        email = request.form['email']
+        password = request.form['password']
+        department = request.form['department']
+        role = request.form['role']
+        clearance_level = request.form['clearance_level']
+        public_key = request.form['public_key']
 
+        # Hash password before saving
+        password_hash = generate_password_hash(password)
+
+        # Check if the username or email already exists in db
+        existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
+        if existing_user:
+            # If user already exists display an error
+            return render_template("register.html", error="Username or Email already exists.")
+
+        # Create a new User object and new user to db
+        new_user = User(
+            username=username,
+            full_name=full_name,
+            phone_number=phone_number,
+            email=email,
+            password_hash=password_hash,
+            department=department,
+            role=role,
+            clearance_level=clearance_level,
+            public_key=public_key
+        )
+
+        # Add to the session and commit the transaction
+        db.session.add(new_user)
+        db.session.commit()
+        # Redirect to a success or login page
+        return redirect(url_for('login'))
     return render_template("register.html")
 
 @app.route('/references')
