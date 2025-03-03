@@ -1,15 +1,19 @@
 {% extends 'base.html' %}
+
 {% block content %}
 <div style="padding-top: 0; border-top:double; border-bottom: double; width:100%; height: 100%; background: linen; text-align: center; padding-left:533px;">
-<form class="form2" style="margin-top:30px; margin-bottom:30px;">
-    <label style="text-shadow:-2px 2px lightseagreen;">Username<input type="text" name="username" placeholder="username"></label><br>
-    <label style="text-shadow:-2px 2px lightseagreen;">Password<input type="password" name="password" placeholder="password"></label><br>
-    <label style="text-shadow:-2px 2px lightseagreen;">Key Code<input type="text" name="key-code" placeholder="key-code"></label><br>
-    <label style="text-shadow:-2px 2px lightseagreen;">Employer<input type="text" name="employer" placeholder="employer"></label><br>
-    <label style="text-shadow:-2px 2px lightseagreen;">Work Role<input type="text" name="work-role" placeholder="work-role"></label><br>
-    <label style="text-shadow:-2px 2px lightseagreen;">Email Address<input type="text" name="email" placeholder="email"></label><br>
-    <label style="text-shadow:-2px 2px lightseagreen;">Phone Number<input type="text" name="phone" placeholder="phone#: xxx-xxx-xxxx"></label>
-    <input id="hov" style="transition: transform 1s; width:280px; margin:10px;" type="submit" value="Register Account">
-</form>
+    <form class="form2" method="POST" action="{{ url_for('register') }}" style="margin-top:30px; margin-bottom:30px;">
+        <label style="text-shadow:-2px 2px lightseagreen;">Username<input type="text" name="username" placeholder="username" required></label><br>
+        <label style="text-shadow:-2px 2px lightseagreen;">Password<input type="password" name="password" placeholder="password" required></label><br>
+        <label style="text-shadow:-2px 2px lightseagreen;">Email Address<input type="text" name="email" placeholder="email" required></label><br>
+        <label style="text-shadow:-2px 2px lightseagreen;">Full Name<input type="text" name="full_name" placeholder="full name" required></label><br>
+        <label style="text-shadow:-2px 2px lightseagreen;">Phone Number<input type="text" name="phone_number" placeholder="phone#: xxx-xxx-xxxx" required></label><br>
+        <label style="text-shadow:-2px 2px lightseagreen;">Department<input type="text" name="department" placeholder="department"></label><br>
+        <label style="text-shadow:-2px 2px lightseagreen;">Role<input type="text" name="role" placeholder="role"></label><br>
+        <label style="text-shadow:-2px 2px lightseagreen;">Clearance Level<input type="number" name="clearance_level" placeholder="clearance level"></label><br>
+        <label style="text-shadow:-2px 2px lightseagreen;">Public Key<input type="text" name="public_key" placeholder="public key"></label><br>
+
+        <input id="hov" style="transition: transform 1s; width:280px; margin:10px;" type="submit" value="Register Account">
+    </form>
 </div>
 {% endblock %}
