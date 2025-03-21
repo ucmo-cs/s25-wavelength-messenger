@@ -1,0 +1,8 @@
+{% for result in results %}
+<tr>
+    <td class="fancybox" style="text-shadow: -2px 2px lawngreen; width:120px; text-align:center; display: inline-block;">{{ result.username }}</td>
+    <td class="fancybox" style="text-shadow: -2px 2px lawngreen; width:220px; text-align:center; display:inline-block;">{{ result.full_name }}</td>
+    <td><button style="width:80px; height:25px;" type="submit">Chat</button></td>
+
+</tr>
+{% endfor %}

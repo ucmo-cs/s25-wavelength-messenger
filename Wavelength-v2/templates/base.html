@@ -12,6 +12,7 @@
    <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Balthazar&family=Fascinate+Inline&family=Handjet:wght@100..900&family=Kumar+One+Outline&family=Monofett&family=Oi&family=Pacifico&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 </head>
 <body>
 <div style="background: linen; font-size:14pt;">
@@ -22,15 +23,16 @@
     <br>
     <nav class="fancybox3" style="text-shadow: -2px 2px lightgrey;">
         <!--hyperlink to profile-->
-        <a href="/chat"><strong>Chat</strong></a>&nbsp&nbsp&nbsp&nbsp&nbsp
-        <a href="/login"><strong>Login</strong></a> &nbsp&nbsp&nbsp&nbsp&nbsp
-        <a href="/register"><strong>Sign Up</strong></a> &nbsp&nbsp&nbsp&nbsp&nbsp
-        <a href="/source"><strong>Src Code</strong></a>&nbsp&nbsp&nbsp&nbsp&nbsp
-        <a href="/references"><strong>References</strong></a> &nbsp&nbsp&nbsp&nbsp&nbsp
-        <a href="/about"><strong>About Us</strong></a>&nbsp&nbsp&nbsp&nbsp&nbsp
-        <a href="/contact"><strong>Contact</strong></a>&nbsp&nbsp&nbsp&nbsp&nbsp
+        <a href="/soc_network"><strong>Direct Message</strong></a>&nbsp&nbsp
+        <a href="/chatHome"><strong>Chatroom</strong></a>&nbsp&nbsp
+        <a href="/login"><strong>Login</strong></a> &nbsp&nbsp
+        <a href="/register"><strong>Sign Up</strong></a> &nbsp&nbsp
+        <a href="/source"><strong>Src Code</strong></a>&nbsp&nbsp
+        <a href="/references"><strong>References</strong></a> &nbsp&nbsp
+        <a href="/about"><strong>About Us</strong></a>&nbsp&nbsp
+        <a href="/contact"><strong>Contact</strong></a>&nbsp&nbsp
         <a href="https://github.com/ucmo-cs/s25-wavelength-messenger"><strong>GitHub</strong></a>
-    </nav>
+        </nav>
 </div>
     <div class="content" style="height: 512px;"> {% block content %}{% endblock %} </div>
 </body>
@@ -38,7 +40,8 @@
     <a href="/">Home</a>&nbsp&nbsp&nbsp&nbsp
     <a href="/about">About Us</a>&nbsp&nbsp&nbsp&nbsp
     <a href="/source">Source Code</a>&nbsp&nbsp&nbsp&nbsp
-    <a href="/chat">Room</a>&nbsp&nbsp&nbsp&nbsp
+    <a href="/soc_network:">Direct Message</a>&nbsp&nbsp&nbsp&nbsp
+    <a href="/chatHome">Chatroom</a>&nbsp&nbsp&nbsp&nbsp
     <a href="/references">References</a>&nbsp&nbsp&nbsp&nbsp
     <a href="/contact">Contact Us</a>&nbsp&nbsp&nbsp&nbsp
     <a href="https://github.com/JacobB-qom/Senior-Project">GitHub</a>
