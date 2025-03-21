@@ -1,11 +1,9 @@
-from flask import Flask,url_for, render_template, session, redirect, request, jsonify
+from flask import Flask,url_for, render_template, session, redirect, request
 from flask_socketio import join_room, leave_room, send, SocketIO
 import random
 from string import ascii_uppercase, ascii_lowercase
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import send_from_directory
-
 
 def generate_secret_key(length):
     while True:
@@ -17,7 +15,7 @@ def generate_secret_key(length):
 
 
 
-app = Flask(__name__,static_folder="static") # initialize application
+app = Flask(__name__) # initialize application
 app.config['SECRET_KEY'] =  generate_secret_key(10)
 socketio = SocketIO(app)  # initialize the web socket using flask-socketIO
 
@@ -57,7 +55,6 @@ class Message(db.Model):
 
 rooms = {} # the number of rooms currently existing, begins empty
 
-
 # method for generating random room codes
 def generate_unique_code(length):
     while True:
@@ -76,8 +73,8 @@ def homepage():
     return render_template("home.html")
 
 # this is the chat home page.
-@app.route('/chat', methods=['GET', 'POST'])
-def chat():  # put application's code here
+@app.route('/chatHome', methods=['GET', 'POST'])
+def chat_room():  # put application's code here
     session.clear()  # clear all sessions
     if request.method == "POST":
         name = request.form.get("name")
@@ -102,6 +99,40 @@ def chat():  # put application's code here
         return redirect(url_for("room"))
 
     return render_template("chatHome.html")
+
+# #this needs to be integrated to the soc_network page,
+# def direct_message():
+#     session.clear()  # clear all sessions
+#     if request.method == "POST":
+#         name = User.query.get("username")
+#         create = request.form.get("create", False)
+#         if create is not False:
+#             rooms[room] = {"members": 0, "messages": []}
+#
+#         #session stores data temporarily
+#         session["room"] = room
+#         session["name"] = name
+#         return redirect(url_for("room"))
+#
+#     return render_template("chatHome.html")
+#
+
+@app.route('/search')
+def search():
+    q = request.args.get('q')
+    print(q)
+    if q:
+        results = User.query.filter(User.username.icontains(q)).limit(5).all()
+    else:
+        results = []
+    return render_template("search_results.html", results=results)
+
+@app.route('/soc_network', methods=['POST', 'GET'])
+def soc_network():
+    return render_template("soc_network.html")
+
+#search bar for users in the databas
+@app.route('/direct')
 
 @app.route('/room')
 def room():
@@ -152,7 +183,7 @@ def register():
         phone_number = request.form['phone_number']
         email = request.form['email']
         password = request.form['password']
-        public_key = request.form['public_key']
+        #public_key = request.form['public_key']
 
         # Hash password before saving
         password_hash = generate_password_hash(password)
@@ -170,10 +201,7 @@ def register():
             phone_number=phone_number,
             email=email,
             password_hash=password_hash,
-            department="",
-            role="",
-            clearance_level=0,
-            public_key=public_key
+            #public_key=public_key
         )
 
         # Add to the session and commit the transaction
@@ -201,6 +229,8 @@ def contact():
 def about():
     return render_template("about.html")
 # socket functions
+
+
 @socketio.on("connect")
 def connect(auth):
     room = session.get("room")
