@@ -149,10 +149,10 @@ def register():
         phone_number = request.form['phone_number']
         email = request.form['email']
         password = request.form['password']
-        department = request.form['department']
-        role = request.form['role']
-        clearance_level = request.form['clearance_level']
-        public_key = request.form['public_key']
+        #department = request.form['department'] #delete line
+        #role = request.form['role'] #delete line
+        #clearance_level = request.form['clearance_level'] #delete line
+        #public_key = request.form['public_key'] #delete line
 
         # Hash password before saving
         password_hash = generate_password_hash(password)
@@ -170,10 +170,10 @@ def register():
             phone_number=phone_number,
             email=email,
             password_hash=password_hash,
-            department=department,
-            role=role,
-            clearance_level=clearance_level,
-            public_key=public_key
+            #department=department, #null
+            #role=role, #null
+            #clearance_level=clearance_level,#null
+            #public_key=public_key#null
         )
 
         # Add to the session and commit the transaction
