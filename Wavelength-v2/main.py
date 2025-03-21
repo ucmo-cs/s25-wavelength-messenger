@@ -1,9 +1,11 @@
-from flask import Flask,url_for, render_template, session, redirect, request
+from flask import Flask,url_for, render_template, session, redirect, request, jsonify
 from flask_socketio import join_room, leave_room, send, SocketIO
 import random
 from string import ascii_uppercase, ascii_lowercase
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import send_from_directory
+
 
 def generate_secret_key(length):
     while True:
@@ -15,7 +17,7 @@ def generate_secret_key(length):
 
 
 
-app = Flask(__name__) # initialize application
+app = Flask(__name__,static_folder="static") # initialize application
 app.config['SECRET_KEY'] =  generate_secret_key(10)
 socketio = SocketIO(app)  # initialize the web socket using flask-socketIO
 
@@ -54,6 +56,7 @@ class Message(db.Model):
 
 
 rooms = {} # the number of rooms currently existing, begins empty
+
 
 # method for generating random room codes
 def generate_unique_code(length):
@@ -149,9 +152,6 @@ def register():
         phone_number = request.form['phone_number']
         email = request.form['email']
         password = request.form['password']
-        department = request.form['department']
-        role = request.form['role']
-        clearance_level = request.form['clearance_level']
         public_key = request.form['public_key']
 
         # Hash password before saving
@@ -170,9 +170,9 @@ def register():
             phone_number=phone_number,
             email=email,
             password_hash=password_hash,
-            department=department,
-            role=role,
-            clearance_level=clearance_level,
+            department="",
+            role="",
+            clearance_level=0,
             public_key=public_key
         )
 

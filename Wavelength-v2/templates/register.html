@@ -2,15 +2,56 @@
 
 {% block content %}
 <div style="padding-top: 0; border-top:double; border-bottom: double; width:100%; height: 100%; background: linen; text-align: center; padding-left:533px; font-size: 10pt;">
-    <form class="form2" method="POST" action="{{ url_for('register') }}" style="margin-top: 75px; margin-bottom: 75px; width:300px; text-align:left;">
+    <form id="registerForm" class="form2" method="POST" action="{{ url_for('register') }}" style="margin-top: 75px; margin-bottom: 75px; width:300px; text-align:left;">
         <span style="text-align:center;"><label style="text-shadow: -2px 2px lightseagreen; text-decoration: underline; font-size:14pt">Register Account</label></span>
         <br><br>
-        <label style="text-shadow:-2px 2px lightseagreen;">Username<input type="text" name="username" placeholder="username" required></label><br>
+        <label style="text-shadow:-2px 2px lightseagreen;">Username<input type="text" id="username" name="username" placeholder="username" required></label><br>
         <label style="text-shadow:-2px 2px lightseagreen;">Password<input type="password" name="password" placeholder="password" required></label><br>
         <label style="text-shadow:-2px 2px lightseagreen;">Email<input type="text" name="email" placeholder="email" required></label><br>
         <label style="text-shadow:-2px 2px lightseagreen;">Name<input type="text" name="full_name" placeholder="full name" required></label><br>
         <label style="text-shadow:-2px 2px lightseagreen;">Phone Number<input type="text" name="phone_number" placeholder="phone#: xxx-xxx-xxxx" required></label><br>
         <span style="text-align:center;"><input id="hov" style="transition: transform 1s; width:280px; margin:10px;" type="submit" value="Register Account"></span>
+        <input type="hidden" id="publickey" name="public_key">
     </form>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl.min.js"></script>
+<script>
+
+    // Utility function to convert ArrayBuffer to Base64 string
+    function arrayBufferToBase64(buffer) {
+        const binary = String.fromCharCode.apply(null, new Uint8Array(buffer));
+        return window.btoa(binary);
+    }
+
+    document.getElementById("registerForm").addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        try {
+            const keyPair = nacl.box.keyPair();
+
+            const publicKeyBase64 = arrayBufferToBase64(keyPair.publicKey);
+            const privateKeyBase64 = arrayBufferToBase64(keyPair.secretKey);
+
+            //console.log(publicKeyBase64);
+            //console.log(privateKeyBase64);
+
+            try{
+                const userData = {username: document.getElementById("username").value, privateKey: privateKeyBase64}
+                localStorage.setItem("wavelength_"+ document.getElementById("username") + "PublicKey", JSON.stringify(userData));
+            } catch (err) {
+                console.warn("LocalStorage is full or unavailable")
+            }
+            document.getElementById("publickey").value = publicKeyBase64;
+
+            //Test that the privateKey made it to localstorage
+//            for (let i = 0; i < localStorage.length; i++) {
+//                let key = localStorage.key(i);
+//                let value = localStorage.getItem(key);
+//                console.log(`${key}: ${value}`);}
+            event.target.submit();
+        } catch (err){
+            console.log("Uh Oh. Error: ", err);
+        }
+    })
+</script>
 {% endblock %}
