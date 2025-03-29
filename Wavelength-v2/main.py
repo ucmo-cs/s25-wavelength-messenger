@@ -183,7 +183,7 @@ def register():
         phone_number = request.form['phone_number']
         email = request.form['email']
         password = request.form['password']
-        #public_key = request.form['public_key']
+        public_key = request.form['public_key']
 
         # Hash password before saving
         password_hash = generate_password_hash(password)
@@ -201,7 +201,7 @@ def register():
             phone_number=phone_number,
             email=email,
             password_hash=password_hash,
-            #public_key=public_key
+            public_key=public_key
         )
 
         # Add to the session and commit the transaction
