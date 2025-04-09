@@ -29,7 +29,7 @@ db = SQLAlchemy(app)  # initialize db-
 
 
 # User model-
-class User(UserMixin, db.Model):
+class User(UserMixin, db.Model): # UserMixin needed for login functionality
     user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     full_name = db.Column(db.String(120), nullable=False)
@@ -81,7 +81,7 @@ login_manager.login_view = "login"
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
+    #loads the logged-in user
 
 # method for generating random room codes
 def generate_unique_code(length):
@@ -103,7 +103,7 @@ def homepage():
 
 # this is the chat home page.
 @app.route('/chatHome', methods=['GET', 'POST'])
-#@login_required
+@login_required
 def chat_room():  # put application's code here
     session.clear()  # clear all sessions
     if request.method == "POST":
@@ -144,7 +144,7 @@ def search():
 
 
 @app.route('/profile')
-#@login_required
+@login_required
 def profile():
     return render_template("profile.html")
 
@@ -184,16 +184,14 @@ def message(data):
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
-        print(username)
         password = request.form.get('password')
-        print(password)
         # Find the user by username
         user = User.query.filter_by(username=username).first()
-        print(user)
+        #print(user)
         if user and check_password_hash(user.password_hash, password) is True:
             # if login successful redirect to home page
             login_user(user)  #log in the user
-            print(user, "logged in successfully")
+            print(user.username, "logged in successfully")
             return redirect(url_for('homepage'))
 
         else:
@@ -206,8 +204,8 @@ def login():
 @app.route('/logout')
 @login_required
 def logout():
-    logout_user()
-    return flask.redirect(flask.url_for('homepage'))
+    logout_user() # immediately logs out user
+    return flask.redirect(flask.url_for('homepage')) # takes them to the homepage, the user is defaulted as guest, and not logged in
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -228,7 +226,7 @@ def register():
         pfp_size = (128, 128)  # size of pfp
         pfp = get_random_image(pfp_size)  # makes pfp
         profile_picture.imsave(f"{username}.png", pfp)  # save pfp to the static folder
-        pfp_path = shutil.copy2(f"{username}.png", "/Users/jacobbrenner/Documents/GitHub/s25-wavelength-messenger/Wavelength-v2/static/profile_pics")  # save pfp to the folder
+        pfp_path = shutil.copy2(f"{username}.png", "/Users/jacobbrenner/Documents/GitHub/s25-wavelength-messenger/Wavelength-v2/static/profile_pics")  # save pfp path for User object
 
         # Check if the username or email already exists in db
         existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
@@ -247,9 +245,9 @@ def register():
                 profile_pic=pfp_path,
                 public_key=public_key
             )
-            print(new_user)
+            #print(new_user)
             login_user(new_user)
-            print(current_user)
+            #print(current_user)
             # Add to the session and commit the transaction
             db.session.add(new_user)
             db.session.commit()
