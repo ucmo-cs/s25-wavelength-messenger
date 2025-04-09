@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="users" uuid="c29082db-c887-4f68-8645-3406ed30379f">
+    <data-source source="LOCAL" name="User" uuid="0c45c92d-f315-436e-855e-19dc04fe6b01">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:F:\School Stuff\Senior Year\Spring\Senior_Proj\s25-wavelength-messenger\Wavelength-v2\instance\users.db</jdbc-url>
+      <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/Wavelength-v2/instance/users.db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
       <libraries>
         <library>

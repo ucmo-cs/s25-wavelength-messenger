@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>base</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}"/>
+
     <script
             src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
             integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
@@ -15,13 +16,16 @@
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 </head>
 <body>
-<div style="background: linen; font-size:14pt;">
-    <br><br>
-    <header style="font-size:46pt; transition: transform 2s;">
+<div style="background: linen; font-size:9pt;font-family:'Press Start 2P', sans-serif; height:100%;">
+
+    <img src="{{ url_for('static', filename=("/profile_pics/" + (current_user.username or "guest") + ".png")) }}" alt="pfp" style="width:15px; height:15px; margin-left:5px;margin-top:5px; border-radius:180px;">
+    <span style="font-size:10pt;">{{ current_user.username or "guest" }}</span>
+    <a href='/logout' style="font-size:10pt;">logout</a>
+    <header style="font-size:46pt; transition: transform 2s; padding-top:25px;">
         <a href="/"><span style="text-align:center; font-weight:bolder; border-style: solid; border-width:2px; border-color: black; padding: 20px 25px 0;background: ghostwhite; color: black; box-shadow: -6px 6px black;">W</span></a>
     </header>
     <br>
-    <nav class="fancybox3" style="text-shadow: -2px 2px lightgrey;">
+    <nav class="fancybox3" style="font-size:9pt; text-shadow: -2px 2px lightgrey;">
         <!--hyperlink to profile-->
         <a href="/soc_network"><strong>Direct Message</strong></a>&nbsp&nbsp
         <a href="/chatHome"><strong>Chatroom</strong></a>&nbsp&nbsp
@@ -31,12 +35,13 @@
         <a href="/references"><strong>References</strong></a> &nbsp&nbsp
         <a href="/about"><strong>About Us</strong></a>&nbsp&nbsp
         <a href="/contact"><strong>Contact</strong></a>&nbsp&nbsp
-        <a href="https://github.com/ucmo-cs/s25-wavelength-messenger"><strong>GitHub</strong></a>
+        <a href="https://github.com/ucmo-cs/s25-wavelength-messenger"><strong>GitHub</strong></a>&nbsp&nbsp
+        <a href="/profile"><strong>Profile</strong></a>
         </nav>
 </div>
     <div class="content" style="height: 512px;"> {% block content %}{% endblock %} </div>
 </body>
-<footer class="fancybox3" style="margin-top:0; padding: 10px 0 10px 0;text-shadow: -2px 2px lightgray; display: inline-block; flex-direction: row;">
+<footer class="fancybox3" style="margin-top:0;font-size:9pt; padding: 10px 0 10px 0;text-shadow: -2px 2px lightgray; display: inline-block; flex-direction: row;">
     <a href="/">Home</a>&nbsp&nbsp&nbsp&nbsp
     <a href="/about">About Us</a>&nbsp&nbsp&nbsp&nbsp
     <a href="/source">Source Code</a>&nbsp&nbsp&nbsp&nbsp
@@ -44,7 +49,8 @@
     <a href="/chatHome">Chatroom</a>&nbsp&nbsp&nbsp&nbsp
     <a href="/references">References</a>&nbsp&nbsp&nbsp&nbsp
     <a href="/contact">Contact Us</a>&nbsp&nbsp&nbsp&nbsp
-    <a href="https://github.com/JacobB-qom/Senior-Project">GitHub</a>
+    <a href="https://github.com/JacobB-qom/Senior-Project">GitHub</a>&nbsp&nbsp&nbsp&nbsp
+    <a href="/profile">Profile</a>
     <br>
 </footer>
 </html>
