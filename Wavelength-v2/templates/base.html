@@ -19,8 +19,8 @@
 <div style="background: linen; font-size:9pt;font-family:'Press Start 2P', sans-serif; height:100%;">
     <div style="margin:0; display: inline-grid;">
         <img src="{{ url_for('static', filename=("/profile_pics/" + (current_user.username or "guest") + ".png")) }}" alt="pfp" style="width:70px; height:70px; margin-left:6px;margin-top:6px; border-radius:180px;">
-        <span class="fancybox" style=" font-size:6pt;width:50px;padding:5px;">{{ current_user.username or "guest" }}</span>
-        <span class="fancybox" id="hov" style="width:50px;"><a href='/logout' style="font-size:6pt;text-align:center;">logout</a></span>
+        <span class="fancybox" id="hov" style="height:8px; font-size:5pt;width:50px;padding:5px;"><a href="/profile">{{ current_user.username or "guest" }}</a></span>
+        <span class="fancybox" id="hov" style="height:8px; width:50px;font-size:5pt;"><a href='/logout' style="text-align:center;">logout</a></span>
     </div>
     <header style="font-size:46pt; transition: transform 2s; padding-top:25px;">
         <a href="/"><span style="text-align:center; font-weight:bolder; border-style: solid; border-width:2px; border-color: black; padding: 20px 25px 0;background: ghostwhite; color: black; box-shadow: -6px 6px black;">W</span></a>
