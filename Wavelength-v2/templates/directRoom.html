@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div style="border-top: double; border-bottom: double;">
+        <div class="message-box">
+            <h2>Direct Chat: {{ room }}</h2> <!-- Display the room code or user names -->
+            <div class="messages" id="messages"></div> <!-- Messages container -->
+            <div class="inputs">
+                <input type="text" rows="3" placeholder="Type a message..." name="message" id="message" />
+                <button type="button" name="send" id="send-btn" onClick="sendMessage()">Send</button> <!-- Send button -->
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            var socketio = io();  <!-- Initialize the socket connection -->
+            const messages = document.getElementById("messages");  <!-- Grab the HTML element for messages -->
+
+            // Function to create and display a message
+            const createMessage = (name, msg) => {
+                const content = `
+                    <div class="text">
+                        <span><strong>${name}</strong>: ${msg}</span>
+                        <!-- Optionally, add timestamps here -->
+                    </div>
+                `;
+                messages.innerHTML += content;  <!-- Append the new message to the message container -->
+            };
+
+            // Listen for incoming messages and create them in the chat UI
+            socketio.on("message", (data) => {
+                createMessage(data.name, data.message);
+            });
+
+            // Function to handle sending messages when the button is clicked
+            const sendMessage = () => {
+                const message = document.getElementById("message");
+                if (message.value === "") return;  <!-- Do not send empty messages then send content -->
+
+                socketio.emit("message", {
+                    room: "{{ room }}",  <!-- Send the current room code to the server -->
+                    data: message.value
+                });
+
+                message.value = "";  <!-- Clear the input field after sending -->
+            };
+        </script>
+    </div>
+{% endblock %}

@@ -46,11 +46,25 @@ class Message(db.Model):
     timestamp = db.Column(db.DateTime, nullable=False)
     track_message_id = db.Column(db.Integer, db.ForeignKey('message.message_id'), nullable=False) #order messages came in
     message_content = db.Column(db.Text, nullable=False)
-
+    # user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) #might not need this
+    # convo_id = db.Column(db.Integer, db.ForeignKey('chat_room.id'), nullable=False)
+    #message_content = db.Column(db.Text, nullable=False) #change to long text
 
     def __repr__(self):
         return f'<Message {self.message_id}>'
 
+    """
+    class ChatRoom(db.Model):
+       convo_id = db.Column(db.Integer, primary_key=True)
+       #room_code = db.Column(db.String(10), unique=True) using convo id instead of room code
+       user_1_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+       user_2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+       messages = db.relationship('Message', backref='chatroom', lazy=True)
+
+
+       def __repr__(self):
+           return f'<ChatRoom {self.convo_id}>'  #i think this needs to be convo_id
+    """
 
 
 rooms = {} # the number of rooms currently existing, begins empty
@@ -99,23 +113,23 @@ def chat_room():  # put application's code here
         return redirect(url_for("room"))
 
     return render_template("chatHome.html")
-
+"""
 # #this needs to be integrated to the soc_network page,
-# def direct_message():
-#     session.clear()  # clear all sessions
-#     if request.method == "POST":
-#         name = User.query.get("username")
-#         create = request.form.get("create", False)
-#         if create is not False:
-#             rooms[room] = {"members": 0, "messages": []}
-#
-#         #session stores data temporarily
-#         session["room"] = room
-#         session["name"] = name
-#         return redirect(url_for("room"))
-#
-#     return render_template("chatHome.html")
-#
+def direct_message():
+     session.clear()  # clear all sessions
+     if request.method == "POST":
+         name = User.query.get("username")
+         create = request.form.get("create", False)
+         if create is not False:
+             rooms[room] = {"members": 0, "messages": []}
+
+         #session stores data temporarily
+         session["room"] = room
+         session["name"] = name
+         return redirect(url_for("room"))
+
+     return render_template("chatHome.html")
+"""
 
 @app.route('/search')
 def search():
@@ -132,7 +146,35 @@ def soc_network():
     return render_template("soc_network.html")
 
 #search bar for users in the databas
-@app.route('/direct')
+#@app.route('/direct')
+
+@app.route('/directRoom/<room_code>', methods=['GET', 'POST'])
+def direct_room(room_code):
+    user1 = session.get('name')
+
+    if not user1:  # If not logged in redirect
+        return redirect(url_for('login'))
+
+    user2 = room_code.replace(user1, '')  # Extract the other user from the room code
+
+    room_code = f"{user1}_{user2}"
+    # get other user from the room code
+
+    if not user2:  # If user2 is empty redirect
+        return redirect(url_for('homepage'))
+
+    #fetch both users from the database
+    user = User.query.filter_by(username=user1).first()
+    other_user = User.query.filter_by(username=user2).first()
+
+    if not user or not other_user:
+        return render_template("home.html", error="User not found!")
+
+    # Create or join a room for private messaging
+    room = room_code
+
+    return render_template("directRoom.html", room=room, user1=user, user2=other_user)
+
 
 @app.route('/room')
 def room():
@@ -143,7 +185,7 @@ def room():
 
 @socketio.on("message")
 def message(data):
-    room = session.get("room")
+    room = session.get("room") #data instead of session
     if room not in rooms:
         return
 
@@ -153,7 +195,7 @@ def message(data):
     }
     send(content, to=room)
     rooms[room]["messages"].append(content)
-    print(f"{session.get('name')} said {data['data']}")
+    print(f"{session.get('name')} said message in room {room}:{data ['data']}")
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -165,6 +207,7 @@ def login():
         user = User.query.filter_by(username=username).first()
 
         if user and check_password_hash(user.password_hash, password):
+            session['name'] = username  # Set the session variable
             # if login successful redirect to home page
             return redirect(url_for('homepage'))
 
@@ -239,6 +282,8 @@ def connect(auth):
         return
     if room not in rooms:
         leave_room(room)
+        return
+    if not room or not name:
         return
 
     join_room(room)

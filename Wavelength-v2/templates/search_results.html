@@ -2,7 +2,21 @@
 <tr>
     <td class="fancybox" style="text-shadow: -2px 2px lawngreen; width:120px; text-align:center; display: inline-block;">{{ result.username }}</td>
     <td class="fancybox" style="text-shadow: -2px 2px lawngreen; width:220px; text-align:center; display:inline-block;">{{ result.full_name }}</td>
-    <td><button style="width:80px; height:25px;" type="submit">Chat</button></td>
+    <td>
 
+        <button type="button" style="width: 65px;" onclick="startDirectMessage('{{ result.username }}')">Chat</button>
+
+    </td>
 </tr>
 {% endfor %}
+
+    <script>
+       function startDirectMessage(targetUsername) {
+            const currentUsername = "{{ session['name'] }}";  // Ensure the logged-in user's name is available in session
+            const roomCode = currentUsername < targetUsername ? currentUsername + targetUsername : targetUsername + currentUsername;
+            window.location.href = '/directRoom/' + roomCode;
+        }
+    </script>
+
+
+
