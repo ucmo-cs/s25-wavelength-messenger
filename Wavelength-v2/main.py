@@ -9,7 +9,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from randimage import get_random_image
 import matplotlib.pyplot as profile_picture
 import shutil
-
+import os
+from sqlalchemy import update
 
 def generate_secret_key(length):
     while True:
@@ -190,7 +191,7 @@ def login():
         #print(user)
         if user and check_password_hash(user.password_hash, password) is True:
             # if login successful redirect to home page
-            login_user(user)  #log in the user
+            login_user(user, remember=True)  #log in the user
             print(user.username, "logged in successfully")
             return redirect(url_for('homepage'))
 
@@ -225,7 +226,7 @@ def register():
         # generate profile picture
         pfp_size = (128, 128)  # size of pfp
         pfp = get_random_image(pfp_size)  # makes pfp
-        profile_picture.imsave(f"{username}.png", pfp)  # save pfp to the static folder
+        profile_picture.imsave(f"{username}.png", pfp)  # save pfp as an image
         pfp_path = shutil.copy2(f"{username}.png", "/Users/jacobbrenner/Documents/GitHub/s25-wavelength-messenger/Wavelength-v2/static/profile_pics")  # save pfp path for User object
 
         # Check if the username or email already exists in db
@@ -245,14 +246,12 @@ def register():
                 profile_pic=pfp_path,
                 public_key=public_key
             )
-            #print(new_user)
-            login_user(new_user)
-            #print(current_user)
             # Add to the session and commit the transaction
             db.session.add(new_user)
             db.session.commit()
+            login_user(new_user, remember=True)
             # Redirect to a success or login page
-            return redirect(url_for('login'))
+            return redirect(url_for('homepage'))
     return render_template("register.html")
 
 
@@ -309,6 +308,41 @@ def disconnect():
     send({"name": name, "message": "has left the room."}, to=room)
     print(f"{name} left the room {room}")
 
+@app.route('/change_info', methods=['GET', 'POST'])
+@login_required
+def change_info():
+    user = current_user
+    path = "/Users/jacobbrenner/Documents/GitHub/s25-wavelength-messenger/Wavelength-v2/static/profile_pics/"
+    current_username = session.get("username")
+    current_phone = session.get("phone_number")
+    current_email = session.get("email")
+    new_username = request.form.get("new_username")
+    new_email = request.form.get("new_email")
+    new_phone = request.form.get("new_phone")
+    #logged-in user changing user information
+    if request.method == 'POST':
+        if new_username != current_username and not "":
+            old_path = os.path.join(path, f"{user.username}.png")
+            new_path = os.path.join(path, f"{new_username}.png")
+            os.rename(old_path, new_path)
+            user.username = new_username
+        elif new_username == current_username or new_username == "" :
+            pass
+        if new_phone != current_phone and not "":
+
+            user.phone_number = new_phone
+        elif new_phone == current_phone or new_phone == "":
+            pass
+        if new_email != current_email and not "":
+            old_path = os.path.join(path, f"{user.username}.png")
+            new_path = os.path.join(path, f"{new_username}.png")
+            os.rename(old_path, new_path)
+            user.email = new_email
+        elif new_email == current_email or new_email== "":
+            pass
+        db.session.commit()
+
+    return render_template("change_info.html")
 
 if __name__ == '__main__':
     with app.app_context():
