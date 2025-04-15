@@ -10,7 +10,6 @@ from randimage import get_random_image
 import matplotlib.pyplot as profile_picture
 import shutil
 import os
-from sqlalchemy import update
 
 def generate_secret_key(length):
     while True:
