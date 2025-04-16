@@ -226,8 +226,10 @@ def register():
         pfp_size = (128, 128)  # size of pfp
         pfp = get_random_image(pfp_size)  # makes pfp
         profile_picture.imsave(f"{username}.png", pfp)  # save pfp as an image
-        pfp_path = shutil.copy2(f"{username}.png", "/Users/jacobbrenner/Documents/GitHub/s25-wavelength-messenger/Wavelength-v2/static/profile_pics")  # save pfp path for User object
-
+        current_dir = os.getcwd()
+        target_dir = "static/profile_pics"
+        rel = os.path.join(current_dir, target_dir)
+        pfp_path = shutil.move(f"{username}.png", rel)  # save pfp path for User object
         # Check if the username or email already exists in db
         existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
         if existing_user:
