@@ -3,13 +3,13 @@
 <div style="background: linen; border-top:double; width: 100%; font-family: 'Press Start 2P', serif; padding-left: 20px;">
 <img src="{{ url_for('static', filename=("/profile_pics/" + current_user.username + ".png")) }}" alt="pfp" style="width:100px; height:100px;margin-top:20px; border-radius:180px;">
     <br><br>
-    <span style="text-shadow: -2px 2px turquoise;">| {{ current_user.full_name }} |</span>
-    <span style="text-shadow: -2px 2px magenta;">Date Joined: xx/xx/xxxx |</span>
-    <span style="text-shadow: -2px 2px yellow;"> Role: {{ current_user.role }} |</span><br><br>
-    <div style="text-shadow: -2px 2px orangered;">Change Name: <input type="text" placeholder="new_name"></div><br>
-    <div style="text-shadow: -2px 2px coral;">Change Password: <input type="text" placeholder="new_password"></div><br>
-    <div style="text-shadow: -2px 2px blue;">Change Phone Number: <input type="text" placeholder="new_phone"></div><br>
-    <div style="text-shadow: -2px 2px lightcyan;">Change email: <input type="text" placeholder="new_email"></div><br>
-<div style="text-shadow: -2px 2px goldenrod;">Change Profile Picture: <input id="hov" class="button" type="button" value="generate"></div><br>
+     <span style="text-shadow: -2px 2px deepskyblue;">| {{ current_user.username }} |</span><br>
+    <span style="text-shadow: -2px 2px turquoise;">| {{ current_user.full_name }} |</span><br>
+    <span style="text-shadow: -2px 2px yellow;"> | Role: {{ current_user.role }} |</span><br>
+    <span style="text-shadow: -2px 2px magenta;">| Date Joined:<br> | xx/xx/xxxx |</span><br>
+    <br><br><br><br> <br><br><br><br> <br><br><br><br> <br>
+<div style="font-size:9pt; text-align:center;">Changing information?<br>
+    <a href="/change_info" id="hov" class="fancybox">Click Here!</a>
+</div>
 </div>
 {% endblock %}
