@@ -313,7 +313,7 @@ def disconnect():
 @login_required
 def change_info():
     user = current_user
-    path = "/Users/jacobbrenner/Documents/GitHub/s25-wavelength-messenger/Wavelength-v2/static/profile_pics/"
+    current_dir = os.getcwd()
     current_username = session.get("username")
     current_phone = session.get("phone_number")
     current_email = session.get("email")
@@ -323,8 +323,8 @@ def change_info():
     #logged-in user changing user information
     if request.method == 'POST':
         if new_username != current_username and not "":
-            old_path = os.path.join(path, f"{user.username}.png")
-            new_path = os.path.join(path, f"{new_username}.png")
+            old_path = os.path.join(current_dir, f"{user.username}.png")
+            new_path = os.path.join(current_dir, f"{new_username}.png")
             os.rename(old_path, new_path)
             user.username = new_username
         elif new_username == current_username or new_username == "" :
@@ -335,8 +335,8 @@ def change_info():
         elif new_phone == current_phone or new_phone == "":
             pass
         if new_email != current_email and not "":
-            old_path = os.path.join(path, f"{user.username}.png")
-            new_path = os.path.join(path, f"{new_username}.png")
+            old_path = os.path.join(current_dir, f"{user.username}.png")
+            new_path = os.path.join(current_dir, f"{new_username}.png")
             os.rename(old_path, new_path)
             user.email = new_email
         elif new_email == current_email or new_email== "":
