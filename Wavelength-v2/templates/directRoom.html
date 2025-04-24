@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="border-top: double; border-bottom: double;">
+    <div class="message-box">
+        <h2>Direct Chat Room: {{ room }}</h2>  <!-- Shows the 4-digit room code -->
+        {% if recipient %}
+            <p>Chatting with: {{ recipient.full_name }}</p>
+        {% endif %}
+        <div class="messages" id="messages"></div>
+
+        <div class="inputs">
+            <input type="text" rows="3" placeholder="Message" name="message" id="message"/>  <!-- Message input -->
+            <button type="button" name="send" id="send-btn" onClick="sendMessage()">Send</button>  <!-- Send button -->
+        </div>
+    </div>
+
+    <script type="text/javascript">
+    var socketio = io(); // initialize socket.io
+
+    // Join the room on page load
+    socketio.emit("join_direct_room", { room: "{{ room }}" });
+
+    const messages = document.getElementById("messages");
+
+    const createMessage = (name, msg) => {
+        const content = `
+            <div class="text">
+                <span><strong>${name}</strong> ~ ${msg}</span>
+            </div>
+        `;
+        messages.innerHTML += content;
+    };
+
+    socketio.on("message", (data) => {
+        createMessage(data.name, data.message);
+    });
+
+    const sendMessage = () => {
+        const messageInput = document.getElementById("message");
+        const message = messageInput.value.trim();
+        if (message.value === "") return;
+
+        socketio.emit("direct_message", {
+            room: "{{ room }}",
+            data: message
+        });
+
+        message.value = "";
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+
+
+        document.querySelectorAll('form').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(form);
+                fetch('/create_direct_room', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.room_code) {
+                        window.location.href = `/directRoom/${data.room_code}`;
+                    } else {
+                        alert("Failed to start chat!");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("An error occurred while starting the chat.");
+                });
+            });
+        });
+    });
+    </script>
+
+</div>
+{% endblock %}

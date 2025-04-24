@@ -154,6 +154,7 @@ button {
     box-shadow: -4px 4px;
     font-family: 'Press Start 2P', sans-serif;
     border-color:black;
+    transform: scale(110%, 110%);
     transition: transform 1s;
 }
 header {
@@ -183,6 +184,7 @@ a {
 }
 #hov:hover {
     transform: scale(105%, 105%);
+    transition: transform 1s;
 }
 footer {
     margin:0;

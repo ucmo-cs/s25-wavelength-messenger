@@ -2,7 +2,32 @@
 <tr>
     <td class="fancybox" style="text-shadow: -2px 2px lawngreen; width:120px; text-align:center; display: inline-block;">{{ result.username }}</td>
     <td class="fancybox" style="text-shadow: -2px 2px lawngreen; width:220px; text-align:center; display:inline-block;">{{ result.full_name }}</td>
-    <td><button style="width:80px; height:25px;" type="submit">Chat</button></td>
+    <td>
+
+        <button onClick="startDirectMessage('{{ result.username }}')">Chat</button>
+
+
+
+
+
+    </td>
 
 </tr>
 {% endfor %}
+
+<script>
+        function startDirectMessage(targetUsername) {
+
+        fetch(`/get_or_create_direct_room/${targetUsername}`) //create directRoom.html and pretend that there is no preexisting messages so just click and takes to page
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = `/directRoom/${data.room_code}`; //
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+
+
+</script>
