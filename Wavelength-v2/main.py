@@ -10,7 +10,8 @@ from randimage import get_random_image
 import matplotlib.pyplot as profile_picture
 import shutil
 import os
-
+from datetime import datetime
+import json
 
 
 def generate_secret_key(length): #generate secret key
@@ -29,9 +30,13 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'  #db
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)  # initialize db-
 
-
-
-
+class Mailbox(db.Model):
+    mailbox_id = db.Column(db.Integer, primary_key=True)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    payload = db.Column(db.Text, nullable=False)  # base64 encoded symmetric key for now
+    type = db.Column(db.String(50), nullable=False, default="symmetric_key")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # User model-
 class User(UserMixin, db.Model): # UserMixin needed for login functionality
@@ -125,7 +130,8 @@ def generate_unique_code(length):
 
 @app.route('/')
 def homepage():
-    return render_template("home.html")
+    justed_logged_in = session.pop('just_logged_in', False)
+    return render_template("home.html",justed_logged_in=justed_logged_in, currentUser = current_user)
 '''
 @app.route("/create_room", methods=["POST"])
 @login_required
@@ -208,7 +214,7 @@ def direct_chat_room(room_code):
     #     room.user2_id if current_user.user_id == room.user1_id
     #     else room.user1_id
     # )
-    return render_template("directRoom.html", room=room_code, recipient=recipient)
+    return render_template("directRoom.html", room=room_code, recipient=recipient, currentUser=current_user)
 
 
 @app.route('/direct_chat', methods=['POST'])
@@ -405,6 +411,9 @@ def login():
             # if login successful redirect to home page
             login_user(user, remember=True)  #log in the user
             print(user.username, "logged in successfully")
+
+            session['just_logged_in'] = True
+
             return redirect(url_for('homepage'))
 
         else:
@@ -557,6 +566,43 @@ def change_info():
         db.session.commit()
 
     return render_template("change_info.html")
+
+@app.route('/api/send_symmetric_key', methods=['POST'])
+@login_required
+def send_symmetric_key():
+    data = request.get_json()
+    recipient_id = data["recipient_id"]
+    payload = data["symmetric_key"]
+
+    mailbox_entry = Mailbox(
+        recipient_id=recipient_id,
+        sender_id=current_user.user_id,
+        payload=json.dumps(payload),
+        type="symmetric_key"
+    )
+    db.session.add(mailbox_entry)
+    db.session.commit()
+
+    return jsonify({'message': 'Symmetric key sent to mailbox.'}), 200
+
+@app.route('/api/get_mailbox', methods=['GET'])
+@login_required
+def get_mailbox():
+    entries = Mailbox.query.filter_by(recipient_id=current_user.user_id).all()
+
+    mailbox_data = [{
+        'id': entry.mailbox_id,
+        'sender_id': entry.sender_id,
+        'payload': json.loads(entry.payload),
+        'type': entry.type,
+        'created_at': entry.created_at.isoformat()
+    } for entry in entries]
+
+    for entry in entries:
+        db.session.delete(entry)
+    db.session.commit()
+
+    return jsonify(mailbox_data)
 
 if __name__ == '__main__':
     with app.app_context():

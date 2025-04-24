@@ -23,7 +23,7 @@
         return window.btoa(binary);
     }
 
-    document.getElementById("registerForm").addEventListener('submit', function(event) {
+    document.getElementById("registerForm").addEventListener('submit', async function(event) {
         event.preventDefault();
 
         try {
@@ -37,7 +37,8 @@
 
             try{
                 const userData = {username: document.getElementById("username").value, privateKey: privateKeyBase64}
-                localStorage.setItem("wavelength_"+ document.getElementById("username") + "PublicKey", JSON.stringify(userData));
+                const place = "wavelength_"+ document.getElementById("username").value + "PrivateKey"
+                localStorage.setItem(place, JSON.stringify(userData));
             } catch (err) {
                 console.warn("LocalStorage is full or unavailable")
             }

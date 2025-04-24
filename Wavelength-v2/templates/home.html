@@ -39,4 +39,38 @@
         appealing in my opinion.
     </div>
 </div>
+ <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        {% if just_logged_in %}
+        await fetchMailbox();
+        {% endif %}
+      });
+
+      async function fetchMailbox() {
+        try {
+            const response = await fetch('/api/fetch_mailbox');
+            const messages = await response.json();
+
+            messages.forEach(entry => {
+              if (entry.type === "symmetric_key") {
+                const room = entry.payload.room;
+                const symmetricPayload = JSON.parse(entry.payload.symmetric_key);
+                const currentUsername = "{{ currentUser.username }}"
+                var secretKey = localStorage.getItem("wavelength_"+ currentUsername + "PrivateKey")
+
+                const decryptedSymmetricKey = nacl.box.open(
+                  symmetricPayload.encryptedKey,  // the encrypted symmetric key
+                  symmetricPayload.nonce,         // nonce used during encryption
+                  symmetricPayload.sender,         // sender's public key (Uint8Array)
+                  secretKey  // recipient's secret key (Uint8Array)
+                );
+
+                localStorage.setItem("wavelength_" + room + "SymmetricKey", decryptedSymmetricKey);
+              }
+            });
+        } catch (error) {
+            console.error("Failed to set up symmetric key in localstorage", error.message)
+        }
+      }
+</script>
 {% endblock %}
