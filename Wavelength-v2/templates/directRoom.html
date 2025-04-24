@@ -52,18 +52,26 @@
     };
 
     document.addEventListener('DOMContentLoaded', async function () {
-
         let room = "{{ room }}"
         let currentUsername = "{{ currentUser.username }}"
         let recipientId = "{{ recipient.user_id }}"
         let recipientPublicKey = "{{ recipient.public_key }}"
-        let [encryptedKeyBase64, nonceBase64] = generateSymmetricKey(room, currentUsername, recipientPublicKey)
-        const payload = {
-            room: room,
-            encryptedKey: encryptedKeyBase64,
-            nonce: nonceBase64,
-            sender: "{{ currentUser.public_key }}"
-        };
+        let just_created_room = "{{ just_created_room }}"
+        console.log("The Room was just created: ", just_created_room, " ", typeof(just_created_room))
+        if(just_created_room === "True") {
+            let [encryptedKeyBase64, nonceBase64] = generateSymmetricKey(room, currentUsername, recipientPublicKey)
+            const payload = {
+                room: room,
+                encryptedKey: encryptedKeyBase64,
+                nonce: nonceBase64,
+                sender: "{{ currentUser.public_key }}"
+            };
+            await sendSymmetricKey(recipientId, payload);
+        }
+        else {
+            console.log("Didn't create a new room or send a new symmetric key :)")
+            ///This is where we will grab the previous messages
+        }
 
         async function sendSymmetricKey(recipientId, payload) {
             try {
@@ -88,8 +96,6 @@
                 console.error('Error:', error);
             }
         }
-
-        await sendSymmetricKey(recipientId, payload);
 
     });
     </script>

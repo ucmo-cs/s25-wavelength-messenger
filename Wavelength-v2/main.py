@@ -209,12 +209,10 @@ def direct_chat_room(room_code):
         recipient = User.query.filter_by(user_id=room.user2_id).first()
     else:
         recipient = User.query.filter_by(user_id=room.user1_id).first()
-    # recipient = (
-    #
-    #     room.user2_id if current_user.user_id == room.user1_id
-    #     else room.user1_id
-    # )
-    return render_template("directRoom.html", room=room_code, recipient=recipient, currentUser=current_user)
+
+    just_created_room = session.pop("just_created_room", False)
+
+    return render_template("directRoom.html", room=room_code, recipient=recipient, currentUser=current_user, just_created_room=just_created_room)
 
 
 @app.route('/direct_chat', methods=['POST'])
@@ -291,14 +289,17 @@ def get_or_create_direct_room(target_username):
     room_code = f"{user1_id}_{user2_id}"
 
     existing_room = DirectRoom.query.filter_by(room_code=room_code).first()
+    print("The Room Exists: ", existing_room)
 
     if existing_room:
+        print("Returning True")
         return jsonify(success=True, room_code=existing_room.room_code)
     else:
         try:
             new_room = DirectRoom(user1_id=user1_id, user2_id=user2_id, room_code=room_code)
             db.session.add(new_room)
             db.session.commit()
+            session['just_created_room'] = True
             return jsonify(success=True, room_code=new_room.room_code)
         except Exception as e:
             print(f"Exception creating direct room: {e}")
