@@ -39,33 +39,61 @@
         appealing in my opinion.
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl.min.js"></script>
+<script src="{{ url_for('static', filename=("generateSymmetric.js")) }}"></script>
  <script>
       document.addEventListener("DOMContentLoaded", async () => {
         {% if just_logged_in %}
-        await fetchMailbox();
+            await checkLocalStorage();
+            await fetchMailbox();
         {% endif %}
       });
 
+      async function checkLocalStorage() {
+          try {
+              var localKey = localStorage.getItem("wavelength_"+ "{{ currentUser.username }}" + "PrivateKey")
+              if(!localKey) {
+                  throw new Error("Private Key not found in LocalStorage");
+              }
+          } catch (error) {
+              console.error("Couldn't find LocalStorage", error.message)
+          }
+      }
+
       async function fetchMailbox() {
         try {
-            const response = await fetch('/api/fetch_mailbox');
+            const response = await fetch('/api/get_mailbox');
             const messages = await response.json();
 
             messages.forEach(entry => {
+                console.log(entry)
               if (entry.type === "symmetric_key") {
-                const room = entry.payload.room;
-                const symmetricPayload = JSON.parse(entry.payload.symmetric_key);
-                const currentUsername = "{{ currentUser.username }}"
-                var secretKey = localStorage.getItem("wavelength_"+ currentUsername + "PrivateKey")
+                    console.log("It is symmetric Key");
+                    const room = entry.payload.room;
+                    console.log("Room is " + room);
+                    const symmetricPayload = entry.payload;
+                    console.log("SymmetricPayload is " + symmetricPayload)
+                    const currentUsername = "{{ currentUser.username }}";
+                    var secretKey = localStorage.getItem("wavelength_"+ currentUsername + "PrivateKey");
+                    var privateKeyJson = JSON.parse(secretKey)
 
-                const decryptedSymmetricKey = nacl.box.open(
-                  symmetricPayload.encryptedKey,  // the encrypted symmetric key
-                  symmetricPayload.nonce,         // nonce used during encryption
-                  symmetricPayload.sender,         // sender's public key (Uint8Array)
-                  secretKey  // recipient's secret key (Uint8Array)
-                );
 
-                localStorage.setItem("wavelength_" + room + "SymmetricKey", decryptedSymmetricKey);
+                    const decryptedSymmetricKey = nacl.box.open(
+                        base64ToUint8Array(symmetricPayload.encryptedKey),  // the encrypted symmetric key
+                        base64ToUint8Array(symmetricPayload.nonce),         // nonce used during encryption
+                        base64ToUint8Array(symmetricPayload.sender),         // sender's public key (Uint8Array)
+                        base64ToUint8Array(privateKeyJson.privateKey)  // recipient's secret key (Uint8Array)
+                    );
+
+                    if (decryptedSymmetricKey) {
+                        const dSKbase64 =  uint8ArrayToBase64(decryptedSymmetricKey)
+                        localStorage.setItem("wavelength_" + room + "SymmetricKey", dSKbase64);
+                        console.log("Saved key as " + "wavelength_" + room + "SymmetricKey")
+                    }
+                    else {
+                        console.error("Decryption Failed for room ", room)
+                    }
+
               }
             });
         } catch (error) {

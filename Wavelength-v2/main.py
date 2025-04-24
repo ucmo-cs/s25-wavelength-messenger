@@ -130,8 +130,8 @@ def generate_unique_code(length):
 
 @app.route('/')
 def homepage():
-    justed_logged_in = session.pop('just_logged_in', False)
-    return render_template("home.html",justed_logged_in=justed_logged_in, currentUser = current_user)
+    just_logged_in = session.pop('just_logged_in', False)
+    return render_template("home.html",just_logged_in=just_logged_in, currentUser = current_user)
 '''
 @app.route("/create_room", methods=["POST"])
 @login_required
@@ -459,22 +459,25 @@ def register():
             return render_template("register.html", error="Username or Email already exists.")
         else:
         # Create a new User object and new user to db
-            new_user = User(
-                user_id=user_id,
-                username=username,
-                full_name=full_name,
-                phone_number=phone_number,
-                email=email,
-                password_hash=password_hash,
-                profile_pic=pfp_path,
-                public_key=public_key
-            )
-            # Add to the session and commit the transaction
-            db.session.add(new_user)
-            db.session.commit()
-            login_user(new_user, remember=True)
-            # Redirect to a success or login page
-            return redirect(url_for('homepage'))
+            try:
+                new_user = User(
+                    user_id=user_id,
+                    username=username,
+                    full_name=full_name,
+                    phone_number=phone_number,
+                    email=email,
+                    password_hash=password_hash,
+                    profile_pic=pfp_path,
+                    public_key=public_key
+                )
+                # Add to the session and commit the transaction
+                db.session.add(new_user)
+                db.session.commit()
+                login_user(new_user, remember=True)
+                # Redirect to a success or login page
+                return redirect(url_for('homepage'))
+            except Exception as e:
+                print(e)
     return render_template("register.html")
 
 
@@ -601,7 +604,8 @@ def get_mailbox():
     for entry in entries:
         db.session.delete(entry)
     db.session.commit()
-
+    if len(mailbox_data) != 0:
+        print(type(mailbox_data[0]['payload']))
     return jsonify(mailbox_data)
 
 if __name__ == '__main__':
