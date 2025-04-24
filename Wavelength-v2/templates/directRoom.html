@@ -6,50 +6,50 @@
         <h2>Direct Chat Room: {{ room }}</h2>  <!-- Shows the 4-digit room code -->
         {% if recipient %}
             <p>Chatting with: {{ recipient.full_name }}</p>
+            <hr style="margin: 10px 0; border: none; border-top: 1px solid #ccc;">
         {% endif %}
-        <div class="messages" id="messages"></div>
 
+        <div class="messages" id="messages"></div>
         <div class="inputs">
             <input type="text" rows="3" placeholder="Message" name="message" id="message"/>  <!-- Message input -->
             <button type="button" name="send" id="send-btn" onClick="sendMessage()">Send</button>  <!-- Send button -->
         </div>
     </div>
-
+<style>
+    .message-line {
+        margin-bottom: 6px; /* adjust as needed */
+    }
+</style>
     <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl.min.js"></script>
     <script src="{{ url_for('static', filename=("generateSymmetric.js")) }}"></script>
     <script type="text/javascript">
     var socketio = io(); // initialize socket.io
 
-    // Join the room on page load
-    socketio.emit("join_direct_room", { room: "{{ room }}" });
+    var current_id = "{{ currentUser.user_id }}"
+    var room = "{{ room }}"
+    socketio.emit('join', {user_id: current_id});
 
-    const messages = document.getElementById("messages");
-
-    const createMessage = (name, msg) => {
-        const content = `
-            <div class="text">
-                <span><strong>${name}</strong> ~ ${msg}</span>
-            </div>
-        `;
-        messages.innerHTML += content;
-    };
-
-    socketio.on("message", (data) => {
-        createMessage(data.name, data.message);
-    });
-
-    const sendMessage = () => {
-        const messageInput = document.getElementById("message");
-        const message = messageInput.value.trim();
-        if (message.value === "") return;
-
-        socketio.emit("direct_message", {
-            room: "{{ room }}",
-            data: message
+    function sendMessage() {
+        const content = document.getElementById('message').value;
+        const recipientId = "{{ recipient.user_id }}"
+        socketio.emit('send_message', {
+            content: content,
+            recipient_id: recipientId
         });
+        document.getElementById('message').value = "";
+    }
 
-        message.value = "";
-    };
+    socketio.on('receive_message', function(data) {
+        console.log("In receive_message", data);
+        const msgBox = document.getElementById("messages");
+        console.log(typeof(data.sender_id) + " " + typeof(current_id));
+        const who = (data.sender_id === current_id) ? "You" : "{{ recipient.username }}";
+        const messageDiv = document.createElement("div");
+        messageDiv.textContent = `${who}: ${data.content}`;
+        messageDiv.className = "message-line";
+        msgBox.appendChild(messageDiv);
+        msgBox.scrollTop = msgBox.scrollHeight;
+    });
 
     document.addEventListener('DOMContentLoaded', async function () {
         let room = "{{ room }}"
@@ -72,6 +72,7 @@
             console.log("Didn't create a new room or send a new symmetric key :)")
             ///This is where we will grab the previous messages
         }
+        await loadMessageHistory();
 
         async function sendSymmetricKey(recipientId, payload) {
             try {
@@ -94,6 +95,27 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
+            }
+        }
+
+        async function loadMessageHistory() {
+            try {
+                const response = await fetch(`/api/message_history/${recipientId}`);
+                const history = await response.json();
+
+                const msgBox = document.getElementById('messages');
+                msgBox.innerHTML = ''; // Clear previous messages if any
+
+                history.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    const who = (msg.name === "You") ? "You" : "{{ currentUser.username }}";
+                    messageDiv.textContent = `${who}: ${msg.message}`;
+                    messageDiv.className = "message-line";
+                    msgBox.appendChild(messageDiv);
+                });
+            }
+            catch (error) {
+                console.error("Failed to load message history: ", error);
             }
         }
 

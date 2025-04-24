@@ -69,22 +69,11 @@ class User(UserMixin, db.Model): # UserMixin needed for login functionality
     def __repr__(self):
         return f'<User {self.username}>'
 
-class conversations(db.Model):
-    convo_id = db.Column(db.Integer, primary_key=True)
-    user1 = db.Column(db.String)
-    user2 = db.Column(db.String)
-    created_on = db.Column(db.DateTime)
-    room_code = db.Column(db.String)
-    def __repr__(self):
-        return f'<Message {self.convo_id}>'
-
 class Message(db.Model):
     message_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     recipient_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
-    track_message_id = db.Column(db.Integer, db.ForeignKey('message.message_id'),
-                                 nullable=False)  #order messages came in
     message_content = db.Column(db.Text, nullable=False)
 
     def __repr__(self):
@@ -360,45 +349,90 @@ def room():
     return render_template("room.html", code=room)
 
 
-@socketio.on("message")
-@login_required
-def message(data):
-    room = session.get("room")
-    if room not in rooms:
-        return
+# @socketio.on("message")
+# @login_required
+# def message(data):
+#     room = session.get("room")
+#     if room not in rooms:
+#         return
+#
+#     content = {
+#         "name": session.get("name"),
+#         "message": data["data"]
+#     }
+#     send(content, to=room)
+#     # rooms[room]["messages"].append(content)
+#     try:
+#         new_message = Message(
+#             sender_id=current_user.user_id,
+#             recipient_id=room.user1_id,
+#             message_content=data["data"]
+#         )
+#         db.session.add(new_message)
+#         db.session.commit()
+#         print("New Message sent to messages table. ", new_message)
+#     except Exception as e:
+#         print(e)
+#
+#     print(f"{session.get('name')} said {data['data']}")
 
-    content = {
-        "name": session.get("name"),
-        "message": data["data"]
-    }
-    send(content, to=room)
-    rooms[room]["messages"].append(content)
-    print(f"{session.get('name')} said {data['data']}")
-
-@socketio.on("join_direct_room")
-def handle_join_direct_room(data):
-    room = data["room"]
-    join_room(room)
-    print(f"{current_user.username} joined direct room {room}")
-    # You might want to emit a message to the room indicating the user joined
-    # emit("direct_message_received", {"name": "System", "message": f"{current_user.username} joined the chat."}, room=room)
-
+# @socketio.on("join_direct_room")
+# def handle_join_direct_room(data):
+#     room = data["room"]
+#     recipient_id = data["recipient"]
+#     currentUser_id = data["currentUser"]
+#     join_room(room)
+#     print(f"{current_user.username} joined direct room {room}")
+#
+#     messages = (
+#         Message.query.filter(
+#             ((Message.sender_id == currentUser_id) & (Message.recipient_id == recipient_id)) |
+#             ((Message.sender_id == recipient_id) & (Message.recipient_id == currentUser_id))
+#         ).order_by(Message.timestamp.asc()).all()
+#     )
+#
+#     message_data = [{
+#             "name": "You" if msg.sender_id == currentUser_id else "Them",
+#             "message": msg.message_content,
+#             "timestamp": msg.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+#         } for msg in messages]
+#
+#     emit("message_history", message_data, room=room)
 
 @socketio.on("join")
 def handle_join(data):
-    room = data["room"]
-    join_room(room)
-    emit("message", {"name": "System", "message": f"{current_user.username} joined the room."}, room=room)
+    user_id = data['user_id']
+    join_room(str(user_id))
 
-@socketio.on("direct_message")
+@socketio.on("send_message")
 def handle_direct_message(data):
-    room = data["room"]
-    message = data["data"]
-    send({"name": current_user.username, "message": message}, to=room)
-    print(f"{current_user.username} sent a direct message to room {room}: {message}")
-    # You might want to store the message in your database here
-    emit("direct_message_received", {"name": current_user.username, "message": message}, room=room)
-    #emit("message", {"name": current_user.username, "message": message}, room=room)
+    recipient_id = data["recipient_id"]
+    content = data["content"]
+
+    new_message = Message(
+        sender_id = current_user.user_id,
+        recipient_id = recipient_id,
+        message_content = content,
+        timestamp = datetime.now(),
+    )
+    db.session.add(new_message)
+    db.session.commit()
+
+    recipient_name = User.query.filter_by(user_id=recipient_id).first().username
+
+    try:
+        message_data = {
+            'id': new_message.message_id,
+            'sender_id': str(current_user.user_id),
+            'recipient_name': recipient_name,
+            'content': content,
+            'timestamp': new_message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+        emit("receive_message", message_data, room=str(current_user.user_id))
+        emit("receive_message", message_data, room=str(recipient_id))
+    except Exception as e:
+        print(e)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -608,6 +642,24 @@ def get_mailbox():
     if len(mailbox_data) != 0:
         print(type(mailbox_data[0]['payload']))
     return jsonify(mailbox_data)
+
+@app.route('/api/message_history/<int:recipient_id>', methods=['GET'])
+@login_required
+def message_history(recipient_id):
+    messages = (
+        Message.query.filter(
+            ((Message.sender_id == current_user.user_id) & (Message.recipient_id == recipient_id)) |
+            ((Message.sender_id == recipient_id) & (Message.recipient_id == current_user.user_id))
+        ).order_by(Message.timestamp.asc()).all()
+    )
+
+    message_data = [{
+        "name": str("You" if msg.sender_id == current_user.user_id else "Them"),
+        "message": msg.message_content,
+        "timestamp": msg.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+    } for msg in messages]
+
+    return jsonify(message_data)
 
 if __name__ == '__main__':
     with app.app_context():
