@@ -500,10 +500,10 @@ def send_symmetric_key():
 @login_required
 def get_mailbox():
     if not current_user.is_authenticated:
-        print("not authenticated")
+        # print("not authenticated")
         return jsonify([])
     else:
-        print("authenticated")
+        # print("authenticated")
         entries = Mailbox.query.filter_by(recipient_id=current_user.user_id).all()
 
         mailbox_data = [{
@@ -517,8 +517,8 @@ def get_mailbox():
         for entry in entries:
             db.session.delete(entry)
         db.session.commit()
-        if len(mailbox_data) != 0:
-            print(type(mailbox_data[0]['payload']))
+        # if len(mailbox_data) != 0:
+        #     print(type(mailbox_data[0]['payload']))
         return jsonify(mailbox_data)
 
 @app.route('/api/message_history/<int:recipient_id>', methods=['GET'])

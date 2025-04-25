@@ -44,10 +44,10 @@ body {
     font-family: "Press Start 2P", serif;
     padding: 10px;
     background-color: ghostwhite;
-    height: 60vh;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    width: 700px;
+    width: 100%;
     align-items: stretch;
     font-size: 9pt;
 }
@@ -55,6 +55,7 @@ body {
     overflow-y: scroll;
     flex: 1;
     font-family: "Press Start 2P", serif;
+    width: 100%;
 }
 .inputs {
     padding: 10px;

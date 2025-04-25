@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="border-top: double; border-bottom: double;">
+<div style="border-top: double; border-bottom: double; width: 98%;">
     <div class="message-box">
         <h2>Direct Chat Room: {{ room }}</h2>  <!-- Shows the 4-digit room code -->
         {% if recipient %}
@@ -17,13 +17,35 @@
     </div>
 <style>
     .message-line {
-        margin-bottom: 6px; /* adjust as needed */
+        margin: 6px;
+        padding: 2px;
+        width: 70%;
+        border-style:double;
+        background-color: ghostwhite;
+        box-shadow: -4px 4px;
+        font-family: 'Press Start 2P', sans-serif;
+        border-color:black;
     }
 </style>
     <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tweetnacl-util@0.15.1/nacl-util.min.js"></script>
     <script src="{{ url_for('static', filename=("generateSymmetric.js")) }}"></script>
     <script src="{{ url_for('static', filename=("encryption.js")) }}"></script>
+<script>
+    // Get the input field
+    var inputSection = document.getElementById("message");
+
+    // Execute a function when the user presses a key on the keyboard
+    message.addEventListener("keypress", function(event) {
+      // If the user presses the "Enter" key on the keyboard
+      if (event.key === "Enter") {
+        // Cancel the default action, if needed
+        event.preventDefault();
+        // Trigger the button element with a click
+        document.getElementById("send-btn").click();
+      }
+    });
+</script>
 <script type="text/javascript">
     var socketio = io(); // initialize socket.io
     let currentChatUserId = "{{ recipient.user_id }}";
@@ -45,10 +67,11 @@
 
     socketio.on('receive_message', function(data) {
         if(data.sender_id === currentChatUserId || data.sender_id === current_id) {
-            console.log("In receive_message", data);
+            {#console.log("In receive_message", data);#}
             const msgBox = document.getElementById("messages");
-            console.log(typeof(data.sender_id) + " " + typeof(current_id));
+            {#console.log(typeof(data.sender_id) + " " + typeof(current_id));#}
             const who = (data.sender_id === current_id) ? "You" : "{{ recipient.username }}";
+
             const messageDiv = document.createElement("div");
             var decryptedMessage = decryptMessage(data.content, data.nonce);
             messageDiv.textContent = `${who}: ${decryptedMessage}`;
@@ -68,7 +91,7 @@
         let recipientId = "{{ recipient.user_id }}"
         let recipientPublicKey = "{{ recipient.public_key }}"
         let just_created_room = "{{ just_created_room }}"
-        console.log("The Room was just created: ", just_created_room, " ", typeof(just_created_room))
+        {#console.log("The Room was just created: ", just_created_room, " ", typeof(just_created_room))#}
         if(just_created_room === "True") {
             let [encryptedKeyBase64, nonceBase64] = generateSymmetricKey(room, currentUsername, recipientPublicKey)
             const payload = {
@@ -80,8 +103,7 @@
             await sendSymmetricKey(recipientId, payload);
         }
         else {
-            console.log("Didn't create a new room or send a new symmetric key :)")
-            ///This is where we will grab the previous messages
+            {#console.log("Didn't create a new room or send a new symmetric key :)")#}
         }
         await loadMessageHistory();
 

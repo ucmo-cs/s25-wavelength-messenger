@@ -43,23 +43,7 @@
 <script src="{{ url_for('static', filename=("generateSymmetric.js")) }}"></script>
  <script>
       document.addEventListener("DOMContentLoaded", async () => {
-          {#var result;#}
-          {#var logged_in_now = ("{{ just_logged_in }}");#}
-          {#console.log(logged_in_now, typeof(logged_in_now));#}
-          {#if(logged_in_now === "True") {#}
-          {#    result = await checkLocalStorage();#}
-          {#    console.log(result);#}
-          {##}
-          {#else#}
-          {#    result = "False"#}
-          {#if(result === "True") {#}
-          {#    await fetchMailbox();#}
-          {#    console.log(result);#}
-          {##}
-          {##}
-
           await fetchMailbox();
-
       });
 
       async function checkLocalStorage() {
@@ -80,19 +64,17 @@
         try {
             const currentUserId = {{ current_user.user_id if current_user.is_authenticated else 'null' }};
             if (currentUserId !== null) {
-                console.log("We grabbing that box")
                 const response = await fetch('/api/get_mailbox');
                 const messages = await response.json();
-                console.log(messages.length);
+                {#console.log(messages.length);#}
                 if (messages.length !== 0) {
                     messages.forEach(entry => {
-                        console.log(entry)
                         if (entry.type === "symmetric_key") {
-                            console.log("It is symmetric Key");
+                            {#console.log("It is symmetric Key");#}
                             const room = entry.payload.room;
-                            console.log("Room is " + room);
+                            {#console.log("Room is " + room);#}
                             const symmetricPayload = entry.payload;
-                            console.log("SymmetricPayload is " + symmetricPayload)
+                            {#console.log("SymmetricPayload is " + symmetricPayload)#}
                             const currentUsername = "{{ currentUser.username }}";
                             var secretKey = localStorage.getItem("wavelength_" + currentUsername + "PrivateKey");
                             var privateKeyJson = JSON.parse(secretKey)
@@ -116,10 +98,10 @@
                         }
                     });
                 } else {
-                    console.log("Nothing in the mailbox :(")
+                    {#console.log("Nothing in the mailbox :(")#}
                 }
             } else {
-                console.log("Sorry Guest, nothing for you...")
+                {#console.log("Sorry Guest, nothing for you...")#}
             }
         } catch(error){
                 console.error("Failed to set up symmetric key in localstorage", error.message)
