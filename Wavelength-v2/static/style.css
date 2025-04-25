@@ -43,7 +43,7 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
-    width: 1410px;
+    width: 100%;
     align-items: stretch;
     font-size: 9pt;
 }
