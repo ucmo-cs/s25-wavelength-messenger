@@ -121,17 +121,6 @@ def generate_unique_code(length):
 def homepage():
     just_logged_in = session.pop('just_logged_in', False)
     return render_template("home.html",just_logged_in=just_logged_in, currentUser = current_user)
-'''
-@app.route("/create_room", methods=["POST"])
-@login_required
-def create_room():
-    room_name = request.form.get("room_name")
-    if room_name and not Room.query.filter_by(name=room_name).first():
-        new_room = Room(name=room_name)
-        db.session.add(new_room)
-        db.session.commit()
-    return redirect(url_for("dashboard"))
-'''
 
 # this is the chat home page.
 @app.route('/chatHome', methods=['GET', 'POST'])
@@ -203,74 +192,10 @@ def direct_chat_room(room_code):
 
     return render_template("directRoom.html", room=room_code, recipient=recipient, currentUser=current_user, just_created_room=just_created_room)
 
-
-@app.route('/direct_chat', methods=['POST'])
-@login_required
-def direct_chat():
-    other_username = request.form.get("other_user")
-    if not other_username:
-        flash("No user selected.")
-        return redirect(url_for("soc_network"))
-
-    other_user = User.query.filter_by(username=other_username).first()
-    if not other_user:
-        flash("User not found.")
-        return redirect(url_for("soc_network"))
-
-    # Create a consistent room code using sorted user IDs or usernames
-    user_ids = sorted([str(current_user.user_id), str(other_user.user_id)])
-    room_code = f"{user_ids[0]}_{user_ids[1]}"
-
-    # Check if the room already exists
-    room = DirectRoom.query.filter_by(room_code=room_code).first()
-    if not room:
-        #Create and save the room if it doesn't exist
-        room = DirectRoom(room_code=room_code, user1_id=user_ids[0], user2_id=user_ids[1])
-        db.session.add(room)
-        db.session.commit()
-
-        #make sure to register the room in the 'rooms' dictionary
-        if room_code not in rooms:
-            rooms[room_code] = {"members": 0, "messages": []}
-
-        #set session info needed for messaging
-        session["room"] = room_code
-        session["name"] = current_user.username
-    return redirect(url_for("direct_chat_room", room_code=room_code))
-    #return render_template("directRoom.html", room_code=room_code)
-
-
-@app.route('/direct/<room_code>')
-@login_required
-def direct_room(room_code):
-    room = DirectRoom.query.filter_by(room_code=room_code).first()
-    if room not in rooms:
-        flash("room not found")
-        return redirect(url_for('chat_room'))
-
-    if current_user.user_id not in [room.user1_id, room.user2_id]:
-        flash("You are not authorized to access this room.")
-        return redirect(url_for("chat_room"))
-
-    # Example: lookup the other user based on room code logic
-    #other_user = get_other_user_in_room(room_code, current_user.user_id)  # you'll define this logic
-    # Ensure the room is in memory
-    if room_code not in rooms:
-        directRooms[room_code] = {"members": 0, "messages": []}
-
-    session["room"] = room_code
-    session["name"] = current_user.username
-
-    recipient_id = room.user2_id if current_user.user_id == room.user1_id else room.user1_id
-    recipient = User.query.get(recipient_id)
-
-    return render_template('directRoom.html',room=room_code,recipient=recipient)
-
 @app.route('/get_or_create_direct_room/<target_username>')
 def get_or_create_direct_room(target_username):
     target_user = User.query.filter_by(username=target_username).first()
     user_now = User.query.filter_by(username=current_user.username).first()
-    #target_user = session.get('name')
     if not target_user:
         return jsonify(success=False, message="target User not found.")
 
@@ -294,26 +219,6 @@ def get_or_create_direct_room(target_username):
             print(f"Exception creating direct room: {e}")
             db.session.rollback()
             return jsonify(success=False, message="Failed to create chat room.")
-    # Sort usernames to maintain consistency
-    #users = tuple(sorted([current_user, target_username]))
-
-    #existing_convo= conversations.query.filter((conversations.user1==current_user & conversations.user2==target_username | conversations.user1 == target_username & conversations.user2 == current_user)).first()
-    #if existing_convo:
-    #    return jsonify(success=True, room_code=existing_convo.room_code)
-    #else:
-    #    try:
-    #        import random
-    #        room_code = str(random.randint(1000, 9999))
-    #        new_convo = conversations(user1=current_user, user2=target_username, room_code=room_code)
-    #        db.session.add(new_convo)
-    #        db.session.commit()
-    #        return jsonify(success=True, room_code=room_code)
-
-     #   except Exception as e:
-     #       print(f"Exception: {e}")
-     #       return jsonify(success=False)
-
-
 
 @app.route('/search', methods=['GET', 'POST'])
 @login_required
@@ -326,7 +231,6 @@ def search():
     else:
         results = []
     return render_template("search_results.html", results=results)
-
 
 @app.route('/profile')
 @login_required
@@ -349,55 +253,21 @@ def room():
     return render_template("room.html", code=room)
 
 
-# @socketio.on("message")
-# @login_required
-# def message(data):
-#     room = session.get("room")
-#     if room not in rooms:
-#         return
-#
-#     content = {
-#         "name": session.get("name"),
-#         "message": data["data"]
-#     }
-#     send(content, to=room)
-#     # rooms[room]["messages"].append(content)
-#     try:
-#         new_message = Message(
-#             sender_id=current_user.user_id,
-#             recipient_id=room.user1_id,
-#             message_content=data["data"]
-#         )
-#         db.session.add(new_message)
-#         db.session.commit()
-#         print("New Message sent to messages table. ", new_message)
-#     except Exception as e:
-#         print(e)
-#
-#     print(f"{session.get('name')} said {data['data']}")
+@socketio.on("message")
+@login_required
+def message(data):
+    room = session.get("room")
+    if room not in rooms:
+        return
 
-# @socketio.on("join_direct_room")
-# def handle_join_direct_room(data):
-#     room = data["room"]
-#     recipient_id = data["recipient"]
-#     currentUser_id = data["currentUser"]
-#     join_room(room)
-#     print(f"{current_user.username} joined direct room {room}")
-#
-#     messages = (
-#         Message.query.filter(
-#             ((Message.sender_id == currentUser_id) & (Message.recipient_id == recipient_id)) |
-#             ((Message.sender_id == recipient_id) & (Message.recipient_id == currentUser_id))
-#         ).order_by(Message.timestamp.asc()).all()
-#     )
-#
-#     message_data = [{
-#             "name": "You" if msg.sender_id == currentUser_id else "Them",
-#             "message": msg.message_content,
-#             "timestamp": msg.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-#         } for msg in messages]
-#
-#     emit("message_history", message_data, room=room)
+    content = {
+        "name": session.get("name"),
+        "message": data["data"]
+    }
+    send(content, to=room)
+    # rooms[room]["messages"].append(content)
+
+    print(f"{session.get('name')} said {data['data']}")
 
 @socketio.on("join")
 def handle_join(data):

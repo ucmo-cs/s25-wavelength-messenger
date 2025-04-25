@@ -14,22 +14,38 @@
     var socketio = io(); <!--initializes the socket for operation with JS-->
     const messages = document.getElementById("messages"); <!--grabs the html element from the form named 'messages'-->
     const createMessage = (name, msg) => { <!--Creates the format for every message sent in the chat-->
-        const content = `
-        <div class="text">
-            <span><strong>${name}</strong>~${msg}</span>
-            <!--<span class="muted" style="font-size:6px">${new Date().toLocaleString()}</span>-->
-        </div>
-        `;
-        messages.innerHTML += content; <!-- adds the message to the stream of messages -->
+        console.log(name);
+        console.log(msg);
+        const msgBox = document.getElementById("messages");
+        const messageDiv = document.createElement("div");
+        messageDiv.textContent = `${name}: ${msg}`;
+        msgBox.appendChild(messageDiv);
+        msgBox.scrollTop = msgBox.scrollHeight;
+
+        {#console.log(msg + " " + typeof(msg))#}
+        {#const content = `#}
+        {#<div class="text">#}
+        {#    <span><strong>${name}</strong>~${msg}</span>#}
+        {#    <!--<span class="muted" style="font-size:6px">${new Date().toLocaleString()}</span>-->#}
+        {#</div>#}
+        {#`;#}
+        {#messages.innerHTML += content; <!-- adds the message to the stream of messages -->#}
     };
     socketio.on("message", (data) => {  <!--creates the message-->
+        console.log("Sending to createMessage")
+        console.log(data.name);
+        console.log(data.message);
         createMessage(data.name, data.message);
     });
 
     const sendMessage = () => { <!--gives the send button functionality, sends the message over the server through the sockets-->
         console.log("send");
         const message = document.getElementById("message");
-        if(message.value === "") return;
+        if(message.value === "") {
+            console.log("Nothing in message")
+            return;
+        }
+        console.log("Emitting to message")
         socketio.emit("message", {data: message.value});
         message.value = "";
     };
