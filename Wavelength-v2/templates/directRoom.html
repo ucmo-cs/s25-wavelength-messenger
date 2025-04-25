@@ -21,9 +21,12 @@
     }
 </style>
     <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tweetnacl-util@0.15.1/nacl-util.min.js"></script>
     <script src="{{ url_for('static', filename=("generateSymmetric.js")) }}"></script>
-    <script type="text/javascript">
+    <script src="{{ url_for('static', filename=("encryption.js")) }}"></script>
+<script type="text/javascript">
     var socketio = io(); // initialize socket.io
+    let currentChatUserId = "{{ recipient.user_id }}";
 
     var current_id = "{{ currentUser.user_id }}"
     var room = "{{ room }}"
@@ -32,23 +35,31 @@
     function sendMessage() {
         const content = document.getElementById('message').value;
         const recipientId = "{{ recipient.user_id }}"
+        var encryptedContent = encryptMessage(content);
         socketio.emit('send_message', {
-            content: content,
+            content: encryptedContent,
             recipient_id: recipientId
         });
         document.getElementById('message').value = "";
     }
 
     socketio.on('receive_message', function(data) {
-        console.log("In receive_message", data);
-        const msgBox = document.getElementById("messages");
-        console.log(typeof(data.sender_id) + " " + typeof(current_id));
-        const who = (data.sender_id === current_id) ? "You" : "{{ recipient.username }}";
-        const messageDiv = document.createElement("div");
-        messageDiv.textContent = `${who}: ${data.content}`;
-        messageDiv.className = "message-line";
-        msgBox.appendChild(messageDiv);
-        msgBox.scrollTop = msgBox.scrollHeight;
+        if(data.sender_id === currentChatUserId || data.sender_id === current_id) {
+            console.log("In receive_message", data);
+            const msgBox = document.getElementById("messages");
+            console.log(typeof(data.sender_id) + " " + typeof(current_id));
+            const who = (data.sender_id === current_id) ? "You" : "{{ recipient.username }}";
+            const messageDiv = document.createElement("div");
+            var decryptedMessage = decryptMessage(data.content, data.nonce);
+            messageDiv.textContent = `${who}: ${decryptedMessage}`;
+            messageDiv.className = "message-line";
+            msgBox.appendChild(messageDiv);
+            msgBox.scrollTop = msgBox.scrollHeight;
+        }
+        else {
+            console.log("Received a Message from a different User. Skipping Decryption...")
+        }
+
     });
 
     document.addEventListener('DOMContentLoaded', async function () {
@@ -108,8 +119,12 @@
 
                 history.forEach(msg => {
                     const messageDiv = document.createElement('div');
-                    const who = (msg.name === "You") ? "You" : "{{ currentUser.username }}";
-                    messageDiv.textContent = `${who}: ${msg.message}`;
+                    const who = (msg.sender === current_id) ? "You" : "{{ recipient.username }}";
+
+                    const [nonceB64, cipherB64] = msg.message.split(":");
+                    var decryptedMessage = decryptMessage(cipherB64,nonceB64);
+
+                    messageDiv.textContent = `${who}: ${decryptedMessage}`;
                     messageDiv.className = "message-line";
                     msgBox.appendChild(messageDiv);
                 });

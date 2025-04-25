@@ -43,17 +43,33 @@
 <script src="{{ url_for('static', filename=("generateSymmetric.js")) }}"></script>
  <script>
       document.addEventListener("DOMContentLoaded", async () => {
-        {% if just_logged_in %}
-            await checkLocalStorage();
-            await fetchMailbox();
-        {% endif %}
+          {#var result;#}
+          {#var logged_in_now = ("{{ just_logged_in }}");#}
+          {#console.log(logged_in_now, typeof(logged_in_now));#}
+          {#if(logged_in_now === "True") {#}
+          {#    result = await checkLocalStorage();#}
+          {#    console.log(result);#}
+          {##}
+          {#else#}
+          {#    result = "False"#}
+          {#if(result === "True") {#}
+          {#    await fetchMailbox();#}
+          {#    console.log(result);#}
+          {##}
+          {##}
+
+          await fetchMailbox();
+
       });
 
       async function checkLocalStorage() {
           try {
               var localKey = localStorage.getItem("wavelength_"+ "{{ currentUser.username }}" + "PrivateKey")
-              if(!localKey) {
-                  throw new Error("Private Key not found in LocalStorage");
+              if(localKey) {
+                  return "True";
+              }
+              else {
+                  return "False";
               }
           } catch (error) {
               console.error("Couldn't find LocalStorage", error.message)
@@ -62,43 +78,53 @@
 
       async function fetchMailbox() {
         try {
-            const response = await fetch('/api/get_mailbox');
-            const messages = await response.json();
+            const currentUserId = {{ current_user.user_id if current_user.is_authenticated else 'null' }};
+            if (currentUserId !== null) {
+                console.log("We grabbing that box")
+                const response = await fetch('/api/get_mailbox');
+                const messages = await response.json();
+                console.log(messages.length);
+                if (messages.length !== 0) {
+                    messages.forEach(entry => {
+                        console.log(entry)
+                        if (entry.type === "symmetric_key") {
+                            console.log("It is symmetric Key");
+                            const room = entry.payload.room;
+                            console.log("Room is " + room);
+                            const symmetricPayload = entry.payload;
+                            console.log("SymmetricPayload is " + symmetricPayload)
+                            const currentUsername = "{{ currentUser.username }}";
+                            var secretKey = localStorage.getItem("wavelength_" + currentUsername + "PrivateKey");
+                            var privateKeyJson = JSON.parse(secretKey)
 
-            messages.forEach(entry => {
-                console.log(entry)
-              if (entry.type === "symmetric_key") {
-                    console.log("It is symmetric Key");
-                    const room = entry.payload.room;
-                    console.log("Room is " + room);
-                    const symmetricPayload = entry.payload;
-                    console.log("SymmetricPayload is " + symmetricPayload)
-                    const currentUsername = "{{ currentUser.username }}";
-                    var secretKey = localStorage.getItem("wavelength_"+ currentUsername + "PrivateKey");
-                    var privateKeyJson = JSON.parse(secretKey)
 
+                            const decryptedSymmetricKey = nacl.box.open(
+                                base64ToUint8Array(symmetricPayload.encryptedKey),  // the encrypted symmetric key
+                                base64ToUint8Array(symmetricPayload.nonce),         // nonce used during encryption
+                                base64ToUint8Array(symmetricPayload.sender),         // sender's public key (Uint8Array)
+                                base64ToUint8Array(privateKeyJson.privateKey)  // recipient's secret key (Uint8Array)
+                            );
 
-                    const decryptedSymmetricKey = nacl.box.open(
-                        base64ToUint8Array(symmetricPayload.encryptedKey),  // the encrypted symmetric key
-                        base64ToUint8Array(symmetricPayload.nonce),         // nonce used during encryption
-                        base64ToUint8Array(symmetricPayload.sender),         // sender's public key (Uint8Array)
-                        base64ToUint8Array(privateKeyJson.privateKey)  // recipient's secret key (Uint8Array)
-                    );
+                            if (decryptedSymmetricKey) {
+                                const dSKbase64 = uint8ArrayToBase64(decryptedSymmetricKey)
+                                localStorage.setItem("wavelength_" + room + "SymmetricKey", dSKbase64);
+                                console.log("Saved key as " + "wavelength_" + room + "SymmetricKey")
+                            } else {
+                                console.error("Decryption Failed for room ", room)
+                            }
 
-                    if (decryptedSymmetricKey) {
-                        const dSKbase64 =  uint8ArrayToBase64(decryptedSymmetricKey)
-                        localStorage.setItem("wavelength_" + room + "SymmetricKey", dSKbase64);
-                        console.log("Saved key as " + "wavelength_" + room + "SymmetricKey")
-                    }
-                    else {
-                        console.error("Decryption Failed for room ", room)
-                    }
-
-              }
-            });
-        } catch (error) {
-            console.error("Failed to set up symmetric key in localstorage", error.message)
+                        }
+                    });
+                } else {
+                    console.log("Nothing in the mailbox :(")
+                }
+            } else {
+                console.log("Sorry Guest, nothing for you...")
+            }
+        } catch(error){
+                console.error("Failed to set up symmetric key in localstorage", error.message)
         }
+
       }
 </script>
 {% endblock %}

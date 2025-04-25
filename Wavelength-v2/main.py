@@ -291,11 +291,14 @@ def handle_direct_message(data):
     recipient_name = User.query.filter_by(user_id=recipient_id).first().username
 
     try:
+        nonce_b64, ciphertext_b64 = content.split(":")
+        print(nonce_b64 + "\n" + ciphertext_b64)
         message_data = {
             'id': new_message.message_id,
             'sender_id': str(current_user.user_id),
             'recipient_name': recipient_name,
-            'content': content,
+            'content': ciphertext_b64,
+            'nonce': nonce_b64,
             'timestamp': new_message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         }
 
@@ -496,22 +499,27 @@ def send_symmetric_key():
 @app.route('/api/get_mailbox', methods=['GET'])
 @login_required
 def get_mailbox():
-    entries = Mailbox.query.filter_by(recipient_id=current_user.user_id).all()
+    if not current_user.is_authenticated:
+        print("not authenticated")
+        return jsonify([])
+    else:
+        print("authenticated")
+        entries = Mailbox.query.filter_by(recipient_id=current_user.user_id).all()
 
-    mailbox_data = [{
-        'id': entry.mailbox_id,
-        'sender_id': entry.sender_id,
-        'payload': json.loads(entry.payload),
-        'type': entry.type,
-        'created_at': entry.created_at.isoformat()
-    } for entry in entries]
+        mailbox_data = [{
+            'id': entry.mailbox_id,
+            'sender_id': entry.sender_id,
+            'payload': json.loads(entry.payload),
+            'type': entry.type,
+            'created_at': entry.created_at.isoformat()
+        } for entry in entries]
 
-    for entry in entries:
-        db.session.delete(entry)
-    db.session.commit()
-    if len(mailbox_data) != 0:
-        print(type(mailbox_data[0]['payload']))
-    return jsonify(mailbox_data)
+        for entry in entries:
+            db.session.delete(entry)
+        db.session.commit()
+        if len(mailbox_data) != 0:
+            print(type(mailbox_data[0]['payload']))
+        return jsonify(mailbox_data)
 
 @app.route('/api/message_history/<int:recipient_id>', methods=['GET'])
 @login_required
@@ -524,7 +532,8 @@ def message_history(recipient_id):
     )
 
     message_data = [{
-        "name": str("You" if msg.sender_id == current_user.user_id else "Them"),
+        "sender": str(msg.sender_id),
+        "recipient": str(recipient_id),
         "message": msg.message_content,
         "timestamp": msg.timestamp.strftime("%Y-%m-%d %H:%M:%S")
     } for msg in messages]
